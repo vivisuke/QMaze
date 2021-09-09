@@ -53,10 +53,10 @@ func updateQValueLabel(ix):
 	#print(qvalue[ix])
 	#qMaxLabel[ix].text = "%.3f" % qvalue[ix].max()
 	#qMinLabel[ix].text = "%.3f" % qvalue[ix].min()
-	qUpLabel[ix].text = "%.3f" % qvalue[ix][0]
-	qLeftLabel[ix].text = "%.3f" % qvalue[ix][1]
-	qRightLabel[ix].text = "%.3f" % qvalue[ix][2]
-	qDownLabel[ix].text = "%.3f" % qvalue[ix][3]
+	qUpLabel[ix].text = "%.2f" % qvalue[ix][0]
+	qLeftLabel[ix].text = "%.2f" % qvalue[ix][1]
+	qRightLabel[ix].text = "%.2f" % qvalue[ix][2]
+	qDownLabel[ix].text = "%.2f" % qvalue[ix][3]
 func _ready():
 	rng.randomize()
 	qvalue.resize(MAZE_SIZE)
@@ -77,17 +77,22 @@ func _ready():
 				qUpLabel[ix] = label
 				add_child(label)
 				label = QValueLabel.instance()
-				label.rect_position = Vector2(x*CELL_WIDTH, y*CELL_WIDTH+CELL_WIDTH*0.25)
+				label.rect_position = Vector2(x*CELL_WIDTH, y*CELL_WIDTH+CELL_WIDTH*0.23)
 				qLeftLabel[ix] = label
 				add_child(label)
 				label = QValueLabel.instance()
-				label.rect_position = Vector2(x*CELL_WIDTH, y*CELL_WIDTH+CELL_WIDTH*0.5)
+				label.rect_position = Vector2(x*CELL_WIDTH, y*CELL_WIDTH+CELL_WIDTH*0.23*2)
 				qRightLabel[ix] = label
 				add_child(label)
 				label = QValueLabel.instance()
-				label.rect_position = Vector2(x*CELL_WIDTH, y*CELL_WIDTH+CELL_WIDTH*0.75)
+				label.rect_position = Vector2(x*CELL_WIDTH, y*CELL_WIDTH+CELL_WIDTH*0.23*3)
 				qDownLabel[ix] = label
 				add_child(label)
+				if !canMoveTo(ix - MAZE_WIDTH): qvalue[ix][0] = REWARD_TRAP
+				if !canMoveTo(ix - 1): qvalue[ix][1] = REWARD_TRAP
+				if !canMoveTo(ix + 1): qvalue[ix][2] = REWARD_TRAP
+				if !canMoveTo(ix + MAZE_WIDTH): qvalue[ix][3] = REWARD_TRAP
+				updateQValueLabel(ix)
 			txt += String($TileMap.get_cell(x, y))
 			txt += " "
 		print(txt)
@@ -97,11 +102,11 @@ func _process(delta):
 	if !started: return
 	# ランダムウォーク
 	var ix = xyToIX(playerPos.x, playerPos.y)	# 現在位置
-	var r		# 移動方向 0:上、1：左、2:右、3:下
+	var dir		# 移動方向 0:上、1：左、2:右、3:下
 	var to		# 移動先IX
 	while true:
-		r = rng.randi_range(0, 3)		# [0, 4)
-		to = ix + [-MAZE_WIDTH, -1, +1, +MAZE_WIDTH][r]
+		dir = rng.randi_range(0, 3)		# [0, 4)
+		to = ix + [-MAZE_WIDTH, -1, +1, +MAZE_WIDTH][dir]
 		if canMoveTo(to):
 			moveTo(to)
 			break;
@@ -121,7 +126,7 @@ func _process(delta):
 			started = false
 		_:		# FLOOR1, FLOOR2
 			maxQ = qvalue[to].max()
-	qvalue[ix][0] += ALPHA * (reward * GAMMA + maxQ - qvalue[ix][0])
+	qvalue[ix][dir] += ALPHA * (reward * GAMMA + maxQ - qvalue[ix][dir])
 	updateQValueLabel(ix)
 func _on_StartButton_pressed():
 	if started: return
