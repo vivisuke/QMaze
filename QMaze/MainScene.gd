@@ -23,6 +23,7 @@ const START_Y = 1
 const START_POS = Vector2(START_X, START_Y)
 
 var nRound = 0
+var nRoundRemain = 0		# 残りラウンド数
 var started = false
 var playerPos = START_POS
 var nSteps = 0				# ステップ数
@@ -147,12 +148,23 @@ func _process(delta):
 				maxQ = qvalue[to].max()
 	qvalue[ix][dir] += ALPHA * (reward * GAMMA + maxQ - qvalue[ix][dir])
 	updateQValueLabel(ix)
-func _on_StartButton_pressed():
-	if started: return
+	if !started && nRoundRemain != 0:
+		nRoundRemain -= 1
+		if nRoundRemain != 0: doStart()
+func doStart():
 	nRound += 1
 	$RoundLabel.text = "#%d Round:" % nRound
 	moveTo(xyToIX(START_X, START_Y))
 	nSteps = 0
 	updateStepsLabel()
 	started = true
+func _on_StartButton_pressed():
+	if started: return
+	doStart()
+	pass
+
+
+func _on_Round100Button_pressed():
+	nRoundRemain = 100
+	doStart()
 	pass
