@@ -12,6 +12,7 @@ const ALPHA = 0.1
 const GAMMA = 0.1
 const REWARD_GOAL = 100.0
 const REWARD_TRAP = -100.0
+const EPSILON = 0.1			# この確率でランダム行動
 
 const CELL_WIDTH = 64
 const MAZE_WIDTH = 12
@@ -100,16 +101,30 @@ func _ready():
 
 func _process(delta):
 	if !started: return
-	# ランダムウォーク
 	var ix = xyToIX(playerPos.x, playerPos.y)	# 現在位置
 	var dir		# 移動方向 0:上、1：左、2:右、3:下
 	var to		# 移動先IX
-	while true:
-		dir = rng.randi_range(0, 3)		# [0, 4)
+	if rng.randf_range(0, 1.0) < EPSILON:		# ランダムウォーク
+		while true:
+			dir = rng.randi_range(0, 3)		# [0, 4)
+			to = ix + [-MAZE_WIDTH, -1, +1, +MAZE_WIDTH][dir]
+			if canMoveTo(to):
+				moveTo(to)
+				break;
+	else:		# 最大Q値の行動を選択、同じ値がある場合はその中から選択
+		var mx = REWARD_TRAP - 1
+		var lst = []
+		for i in range(qvalue[ix].size()):
+			if qvalue[ix][i] > mx:
+				mx = qvalue[ix][i]
+				lst = [i]
+			elif qvalue[ix][i] == mx:
+				lst.push_back(i)
+		if lst.size() > 1:
+			dir = lst[rng.randi_range(0, lst.size() - 1)]
+		else:
+			dir = lst[0]
 		to = ix + [-MAZE_WIDTH, -1, +1, +MAZE_WIDTH][dir]
-		if canMoveTo(to):
-			moveTo(to)
-			break;
 	nSteps += 1
 	updateStepsLabel()
 	#var c = $TileMap.get_cell(playerPos.x, playerPos.y)
@@ -125,7 +140,8 @@ func _process(delta):
 			reward = REWARD_TRAP
 			started = false
 		_:		# FLOOR1, FLOOR2
-			maxQ = qvalue[to].max()
+			if qvalue[to] != null:
+				maxQ = qvalue[to].max()
 	qvalue[ix][dir] += ALPHA * (reward * GAMMA + maxQ - qvalue[ix][dir])
 	updateQValueLabel(ix)
 func _on_StartButton_pressed():
