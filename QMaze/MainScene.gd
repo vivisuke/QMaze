@@ -18,7 +18,9 @@ const START_POS = Vector2(START_X, START_Y)
 
 var started = false
 var playerPos = START_POS
-var qlTable = []
+var qvalue = []				# Q値リスト
+var qlTable = []			# Q値最大値表示用ラベル
+
 
 var rng = RandomNumberGenerator.new()
 
@@ -36,14 +38,17 @@ func moveTo(to : int):
 	$Player.position = (playerPos + Vector2(0.5, 0.5)) * CELL_WIDTH
 func _ready():
 	rng.randomize()
+	qvalue.resize(MAZE_SIZE)
 	qlTable.resize(MAZE_SIZE)
 	for y in range(MAZE_HEIGHT):
 		var txt = ""
 		for x in range(MAZE_WIDTH):
 			if $TileMap.get_cell(x, y) <= FLOOR2:
+				var ix = xyToIX(x, y)
+				qvalue[ix] = [0.0, 0.0, 0.0, 0.0]		# 上、左、右、下方向に移動Q値
 				var label = QValueLabel.instance()
 				label.rect_position = Vector2(x*CELL_WIDTH, y*CELL_WIDTH)
-				qlTable[xyToIX(x, y)] = label
+				qlTable[ix] = label
 				add_child(label)
 			txt += String($TileMap.get_cell(x, y))
 			txt += " "
