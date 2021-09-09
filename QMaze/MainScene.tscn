@@ -179,23 +179,36 @@ animation = "idle"
 
 [node name="StartButton" type="Button" parent="."]
 margin_left = 857.141
-margin_top = 66.6786
+margin_top = 117.075
 margin_right = 937.141
-margin_bottom = 111.679
+margin_bottom = 162.075
 custom_fonts/font = SubResource( 3 )
 text = "Start"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="StepLabel" type="Label" parent="."]
-margin_left = 827.0
-margin_top = 18.0
-margin_right = 936.0
-margin_bottom = 39.0
+[node name="RoundLabel" type="Label" parent="."]
+margin_left = 812.361
+margin_top = 20.5199
+margin_right = 943.361
+margin_bottom = 41.5199
 custom_fonts/font = SubResource( 4 )
 custom_colors/font_color = Color( 0, 0, 0, 1 )
-text = "0 steps"
+text = "#0 Round:"
+align = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="StepLabel" type="Label" parent="."]
+margin_left = 820.7
+margin_top = 68.3969
+margin_right = 929.7
+margin_bottom = 89.3969
+custom_fonts/font = SubResource( 4 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "0 Steps"
 align = 2
 __meta__ = {
 "_edit_use_anchors_": false
