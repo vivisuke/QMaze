@@ -10,8 +10,8 @@ enum {
 
 const ALPHA = 0.1
 const GAMMA = 0.1
-const REWARD_GOAL = 10.0
-const REWARD_TRAP = -10.0
+const REWARD_GOAL = 1.0
+const REWARD_TRAP = -1.0
 const EPSILON = 0.05			# この確率でランダム行動
 
 const CELL_WIDTH = 64
@@ -56,10 +56,10 @@ func updateQValueLabel(ix):
 	#print(qvalue[ix])
 	#qMaxLabel[ix].text = "%.3f" % qvalue[ix].max()
 	#qMinLabel[ix].text = "%.3f" % qvalue[ix].min()
-	qUpLabel[ix].text = "%.3f" % qvalue[ix][0]
-	qLeftLabel[ix].text = "%.3f" % qvalue[ix][1]
-	qRightLabel[ix].text = "%.3f" % qvalue[ix][2]
-	qDownLabel[ix].text = "%.3f" % qvalue[ix][3]
+	qUpLabel[ix].text = "%7.4f" % qvalue[ix][0]
+	qLeftLabel[ix].text = "%7.4f" % qvalue[ix][1]
+	qRightLabel[ix].text = "%7.4f" % qvalue[ix][2]
+	qDownLabel[ix].text = "%7.4f" % qvalue[ix][3]
 func _ready():
 	rng.randomize()
 	qvalue.resize(MAZE_SIZE)
