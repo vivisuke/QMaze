@@ -18,6 +18,7 @@ const START_POS = Vector2(START_X, START_Y)
 
 var started = false
 var playerPos = START_POS
+var nSteps = 0				# ステップ数
 var qvalue = []				# Q値リスト
 var qlTable = []			# Q値最大値表示用ラベル
 
@@ -36,6 +37,8 @@ func moveTo(to : int):
 	playerPos.x = to % MAZE_WIDTH
 	playerPos.y = to / MAZE_WIDTH
 	$Player.position = (playerPos + Vector2(0.5, 0.5)) * CELL_WIDTH
+func updateStepsLabel():
+	$StepLabel.text = "%d steps" % nSteps
 func _ready():
 	rng.randomize()
 	qvalue.resize(MAZE_SIZE)
@@ -58,17 +61,23 @@ func _ready():
 func _process(delta):
 	if !started: return
 	# ランダムウォーク
+	var r		# 移動方向 0:上、1：左、2:右、3:下
+	var to		# 移動先IX
 	while true:
-		var r = rng.randi_range(0, 3)		# [0, 4)
-		var to = xyToIX(playerPos.x, playerPos.y) + [-MAZE_WIDTH, -1, +1, +MAZE_WIDTH][r]
+		r = rng.randi_range(0, 3)		# [0, 4)
+		to = xyToIX(playerPos.x, playerPos.y) + [-MAZE_WIDTH, -1, +1, +MAZE_WIDTH][r]
 		if canMoveTo(to):
 			moveTo(to)
 			break;
+	nSteps += 1
+	updateStepsLabel()
 	if $TileMap.get_cell(playerPos.x, playerPos.y) > FLOOR2:
 		started = false
 
 func _on_StartButton_pressed():
 	if started: return
 	moveTo(xyToIX(START_X, START_Y))
+	nSteps = 0
+	updateStepsLabel()
 	started = true
 	pass

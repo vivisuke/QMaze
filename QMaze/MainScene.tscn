@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://images/ground_06.png" type="Texture" id=1]
 [ext_resource path="res://images/block_02.png" type="Texture" id=2]
@@ -152,6 +152,10 @@ animations = [ {
 size = 20
 font_data = ExtResource( 11 )
 
+[sub_resource type="DynamicFont" id=4]
+size = 20
+font_data = ExtResource( 11 )
+
 [node name="MainScene" type="Node2D"]
 script = ExtResource( 9 )
 
@@ -174,12 +178,25 @@ frames = SubResource( 2 )
 animation = "idle"
 
 [node name="StartButton" type="Button" parent="."]
-margin_left = 871.0
-margin_top = 44.0
-margin_right = 951.0
-margin_bottom = 89.0
+margin_left = 857.141
+margin_top = 66.6786
+margin_right = 937.141
+margin_bottom = 111.679
 custom_fonts/font = SubResource( 3 )
 text = "Start"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="StepLabel" type="Label" parent="."]
+margin_left = 827.0
+margin_top = 18.0
+margin_right = 936.0
+margin_bottom = 39.0
+custom_fonts/font = SubResource( 4 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+text = "0 steps"
+align = 2
 __meta__ = {
 "_edit_use_anchors_": false
 }
