@@ -2,14 +2,16 @@ extends Node2D
 
 
 enum {
-	FLOOR1 = 0,
-	FLOOR2 = 1,
+	FLOOR1 = 0,		# 灰色床
+	FLOOR2 = 1,		# 茶色床
 	TRAP = 5,
 	GOAL = 8,
 }
 
 const ALPHA = 0.1
-const GAMMA = 0.1
+#const GAMMA = 0.1
+#const GAMMA = 0.2
+const GAMMA = 0.99
 const REWARD_GOAL = 1.0
 const REWARD_TRAP = -1.0
 const EPSILON = 0.05			# この確率でランダム行動
@@ -26,6 +28,7 @@ var nRound = 0
 var nRoundRemain = 0		# 残りラウンド数
 var started = false
 var playerPos = START_POS
+var goalPos = Vector2(-1, -1)
 var nSteps = 0				# ステップ数
 var qvalue = []				# Q値リスト
 #var qMaxLabel = []			# Q値最大値表示用ラベル
@@ -53,6 +56,7 @@ func moveTo(to : int):
 func updateStepsLabel():
 	$StepLabel.text = "%d steps" % nSteps
 func updateQValueLabel(ix):
+	var mxv = qvalue[ix].max()
 	#print(qvalue[ix])
 	#qMaxLabel[ix].text = "%.3f" % qvalue[ix].max()
 	#qMinLabel[ix].text = "%.3f" % qvalue[ix].min()
@@ -60,6 +64,11 @@ func updateQValueLabel(ix):
 	qLeftLabel[ix].text = "%7.4f" % qvalue[ix][1]
 	qRightLabel[ix].text = "%7.4f" % qvalue[ix][2]
 	qDownLabel[ix].text = "%7.4f" % qvalue[ix][3]
+	# 最大値を与えるラベル色：緑
+	qUpLabel[ix].set("custom_colors/font_color", Color.green if qvalue[ix][0] == mxv else Color.white)
+	qLeftLabel[ix].set("custom_colors/font_color", Color.green if qvalue[ix][1] == mxv else Color.white)
+	qRightLabel[ix].set("custom_colors/font_color", Color.green if qvalue[ix][2] == mxv else Color.white)
+	qDownLabel[ix].set("custom_colors/font_color", Color.green if qvalue[ix][3] == mxv else Color.white)
 func _ready():
 	rng.randomize()
 	qvalue.resize(MAZE_SIZE)
@@ -96,6 +105,8 @@ func _ready():
 				if !canMoveTo(ix + 1): qvalue[ix][2] = REWARD_TRAP
 				if !canMoveTo(ix + MAZE_WIDTH): qvalue[ix][3] = REWARD_TRAP
 				updateQValueLabel(ix)
+			elif $TileMap.get_cell(x, y) == GOAL:
+				goalPos = Vector2(x, y)
 			txt += String($TileMap.get_cell(x, y))
 			txt += " "
 		print(txt)
@@ -146,7 +157,7 @@ func _process(delta):
 			reward = -0.01		# 長くさまようのはマイナス報酬
 			if qvalue[to] != null:
 				maxQ = qvalue[to].max()
-	qvalue[ix][dir] += ALPHA * (reward * GAMMA + maxQ - qvalue[ix][dir])
+	qvalue[ix][dir] += ALPHA * (reward + GAMMA * maxQ - qvalue[ix][dir])
 	updateQValueLabel(ix)
 	if !started && nRoundRemain != 0:
 		nRoundRemain -= 1
@@ -168,3 +179,19 @@ func _on_Round100Button_pressed():
 	nRoundRemain = 100
 	doStart()
 	pass
+
+func backprop(ix, v):
+	pass
+
+func _on_BackpropButton_pressed():
+	var lst = [goalPos]
+	while lst.size() != 0:
+		var lst2 = []
+		for i in range(lst.size()):
+			var ix = xyToIX(lst[i].x, lst[i].y)
+			var v = 1.0 if lst[i] == goalPos else qvalue[ix].max() * 0.99
+			backprop(ix-MAZE_WIDTH, v)
+			backprop(ix-1, v)
+			backprop(ix+1, v)
+			backprop(ix+MAZE_WIDTH, v)
+	pass # Replace with function body.
