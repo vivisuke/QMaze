@@ -8,7 +8,7 @@ enum {
 	GOAL = 8,
 }
 
-const ALPHA = 0.1
+const ALPHA = 0.2
 #const GAMMA = 0.1
 #const GAMMA = 0.2
 const GAMMA = 0.99
@@ -29,7 +29,9 @@ var nRoundRemain = 0		# 残りラウンド数
 var started = false
 var playerPos = START_POS
 var goalPos = Vector2(-1, -1)
+var goalIX = -1
 var nSteps = 0				# ステップ数
+var sumSteps = 0			# ステップ数合計（10ラウンドごと）
 var qvalue = []				# Q値リスト
 #var qMaxLabel = []			# Q値最大値表示用ラベル
 #var qMinLabel = []			# Q値最小値表示用ラベル
@@ -37,6 +39,7 @@ var qUpLabel = []			# 上移動Q値最表示用ラベル
 var qLeftLabel = []			# 左移動Q値最表示用ラベル
 var qRightLabel = []		# 右移動Q値最表示用ラベル
 var qDownLabel = []			# 下移動Q値最表示用ラベル
+var dstToSrc = []			# 移動元位置リスト配列
 
 
 var rng = RandomNumberGenerator.new()
@@ -72,6 +75,9 @@ func updateQValueLabel(ix):
 func _ready():
 	rng.randomize()
 	qvalue.resize(MAZE_SIZE)
+	dstToSrc.resize(MAZE_SIZE)
+	for i in range(dstToSrc.size()):
+		dstToSrc[i] = []
 	#qMaxLabel.resize(MAZE_SIZE)
 	#qMinLabel.resize(MAZE_SIZE)
 	qUpLabel.resize(MAZE_SIZE)
@@ -79,10 +85,11 @@ func _ready():
 	qRightLabel.resize(MAZE_SIZE)
 	qDownLabel.resize(MAZE_SIZE)
 	for y in range(MAZE_HEIGHT):
+		#print("y = ", y)
 		var txt = ""
 		for x in range(MAZE_WIDTH):
+			var ix = xyToIX(x, y)
 			if $TileMap.get_cell(x, y) <= FLOOR2:
-				var ix = xyToIX(x, y)
 				qvalue[ix] = [0.0, 0.0, 0.0, 0.0]		# 上、左、右、下方向に移動Q値
 				var label = QValueLabel.instance()
 				label.rect_position = Vector2(x*CELL_WIDTH, y*CELL_WIDTH)
@@ -101,15 +108,24 @@ func _ready():
 				qDownLabel[ix] = label
 				add_child(label)
 				if !canMoveTo(ix - MAZE_WIDTH): qvalue[ix][0] = REWARD_TRAP
+				else: dstToSrc[ix - MAZE_WIDTH].push_back(ix)
 				if !canMoveTo(ix - 1): qvalue[ix][1] = REWARD_TRAP
+				else: dstToSrc[ix - 1].push_back(ix)
 				if !canMoveTo(ix + 1): qvalue[ix][2] = REWARD_TRAP
+				else: dstToSrc[ix + 1].push_back(ix)
 				if !canMoveTo(ix + MAZE_WIDTH): qvalue[ix][3] = REWARD_TRAP
+				else: dstToSrc[ix + MAZE_WIDTH].push_back(ix)
 				updateQValueLabel(ix)
 			elif $TileMap.get_cell(x, y) == GOAL:
 				goalPos = Vector2(x, y)
+				goalIX = ix
 			txt += String($TileMap.get_cell(x, y))
 			txt += " "
 		print(txt)
+	#print("dstToSrc[Goal] = ", dstToSrc[xyToIX(goalPos.x, goalPos.y)])
+	#print("dstToSrc[106] = ", dstToSrc[106])
+	#print("dstToSrc[13] = ", dstToSrc[13])
+	#print("dstToSrc[14] = ", dstToSrc[14])
 	pass
 
 func _process(delta):
@@ -150,6 +166,10 @@ func _process(delta):
 		GOAL:
 			reward = REWARD_GOAL
 			started = false
+			sumSteps += nSteps
+			if nRound % 10 == 0:
+				print("avg steps = %.1f" % (sumSteps / 10.0) )
+				sumSteps = 0
 		TRAP:
 			reward = REWARD_TRAP
 			started = false
@@ -184,14 +204,28 @@ func backprop(ix, v):
 	pass
 
 func _on_BackpropButton_pressed():
-	var lst = [goalPos]
+	#print("dstToSrc[Goal] = ", dstToSrc[xyToIX(goalPos.x, goalPos.y)])
+	#var init = true
+	#var lst = dstToSrc[xyToIX(goalPos.x, goalPos.y)]
+	var lst = [goalIX]
 	while lst.size() != 0:
+		print("lst.size() = ", lst.size())
 		var lst2 = []
 		for i in range(lst.size()):
-			var ix = xyToIX(lst[i].x, lst[i].y)
-			var v = 1.0 if lst[i] == goalPos else qvalue[ix].max() * 0.99
-			backprop(ix-MAZE_WIDTH, v)
-			backprop(ix-1, v)
-			backprop(ix+1, v)
-			backprop(ix+MAZE_WIDTH, v)
+			var dst = lst[i]
+			var reward = 1.0 if dst == goalIX else 0
+			var maxQ = qvalue[dst].max() if dst != goalIX else 0
+			for k in range(dstToSrc[dst].size()):
+				var src = dstToSrc[dst][k]
+				if qvalue[src].max() == 0.0:
+					var act
+					if dst == src - MAZE_WIDTH: act = 0
+					elif dst == src - 1: act = 1
+					elif dst == src + 1: act = 2
+					else: act = 3
+					#print(("maxQ(%d) = " % ix), qvalue[ix].max())
+					qvalue[src][act] = (reward + GAMMA * maxQ) * 0.99
+					updateQValueLabel(src)
+					lst2.push_back(src)
+		lst = lst2
 	pass # Replace with function body.
